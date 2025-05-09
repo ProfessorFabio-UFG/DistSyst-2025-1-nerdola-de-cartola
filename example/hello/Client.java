@@ -39,23 +39,45 @@ package example.hello;
 
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
+import javax.imageio.ImageIO;
+
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.awt.image.BufferedImage;
+import java.io.IOException;
+
 
 public class Client {
 
     private Client() {}
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
 
         System.out.println("Initiating client");
+        File input = new File("/home/matheus-lucas/Estudos/UFG/8_SEM/SD/DistSyst-2025-1-nerdola-de-cartola/chilll.png");
+        File output = new File("output.png");
+        BufferedImage image = ImageIO.read(input);
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+        byte[] imageData = baos.toByteArray();
         
         String host = (args.length < 1) ? null : args[0];
         try {
             Registry registry = LocateRegistry.getRegistry(host);
             System.out.println("Registry has been located");
+
             Hello stub = (Hello) registry.lookup("Hello");
             System.out.println("Found server");
+
             String response = stub.sayHello();
             System.out.println("response: " + response);
+
+            byte[] responseImageBuffer = stub.grayScaleImage(imageData);
+            ByteArrayInputStream bais = new ByteArrayInputStream(responseImageBuffer);
+            BufferedImage responseImage = ImageIO.read(bais);
+            ImageIO.write(responseImage, "png", output);
+            System.out.println("Grayscale conversion done.");
         } catch (Exception e) {
             System.err.println("Client exception: " + e.toString());
             e.printStackTrace();

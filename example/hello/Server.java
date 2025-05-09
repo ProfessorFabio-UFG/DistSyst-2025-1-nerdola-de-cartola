@@ -39,8 +39,15 @@ package example.hello;
 
 import java.rmi.registry.Registry;
 import java.rmi.registry.LocateRegistry;
-import java.rmi.RemoteException;
 import java.rmi.server.UnicastRemoteObject;
+
+import javax.imageio.ImageIO;
+
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.awt.Color;
 
 public class Server implements Hello {
 
@@ -48,6 +55,26 @@ public class Server implements Hello {
 
     public String sayHello() {
         return "Hello, world!";
+    }
+
+    public byte[] grayScaleImage(byte[] imageBuffer) throws IOException  {
+        ByteArrayInputStream bais = new ByteArrayInputStream(imageBuffer);
+        BufferedImage image = ImageIO.read(bais);
+
+        for (int y = 0; y < image.getHeight(); y++) {
+            for (int x = 0; x < image.getWidth(); x++) {
+                Color color = new Color(image.getRGB(x, y));
+                int gray = (int)(color.getRed() * 0.3 +
+                                    color.getGreen() * 0.59 +
+                                    color.getBlue() * 0.11);
+                Color grayColor = new Color(gray, gray, gray);
+                image.setRGB(x, y, grayColor.getRGB());
+            }
+        }
+
+        ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        ImageIO.write(image, "png", baos);
+        return baos.toByteArray();
     }
 
     public static void main(String args[]) {
@@ -58,7 +85,7 @@ public class Server implements Hello {
 
             // Bind the remote object's stub in the registry
             Registry registry = LocateRegistry.getRegistry();
-            registry.bind("Hello", stub);
+            registry.rebind("Hello", stub);
 
             System.err.println("Server ready");
         } catch (Exception e) {
